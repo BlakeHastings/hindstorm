@@ -4,15 +4,42 @@
 
 The output is the model itself: JSON for tooling, or **Mermaid** and **Graphviz DOT** for a diagram. Rendering that into an interactive visual is a separate effort and out of scope here.
 
+A slice of the [order-to-cash sample](samples/Hindstorm.Sample), colored by concept the way a storming wall is:
+
 ```mermaid
 flowchart LR
-    creator["Creator"] -->|issues| push["PushSkillVersion"]
-    push -->|handles| skill["Skill"]
-    skill -->|raises| pushed["SkillVersionPushed"]
-    pushed -->|reacts to| policy["RefinementPolicy"]
-    policy -->|issues| refine["StartRefinement"]
-    pushed -->|updates| view["SkillCatalogView"]
+    customer["Customer"]:::Actor
+    place["PlaceOrder"]:::Command
+    order["Order"]:::Aggregate
+    credit["WithinCreditLimit"]:::Invariant
+    placed["OrderPlaced"]:::DomainEvent
+    status["OrderStatusView"]:::ReadModel
+    paypolicy["PaymentPolicy"]:::Policy
+    auth["AuthorizePayment"]:::Command
+    gateway["PaymentGateway"]:::ExternalSystem
+    authorized["PaymentAuthorized"]:::DomainEvent
+
+    customer -->|issues| place
+    place -->|handles| order
+    order -->|enforces| credit
+    order -->|raises| placed
+    placed -->|updates| status
+    placed -->|reacts to| paypolicy
+    paypolicy -->|issues| auth
+    auth -->|handles| gateway
+    gateway -->|raises| authorized
+
+    classDef Actor fill:#BCAAA4,stroke:#4E342E,color:#000;
+    classDef Command fill:#90CAF9,stroke:#1565C0,color:#000;
+    classDef Aggregate fill:#FFE082,stroke:#F9A825,color:#000;
+    classDef Invariant fill:#80CBC4,stroke:#00695C,color:#000;
+    classDef DomainEvent fill:#FFB74D,stroke:#E65100,color:#000;
+    classDef ReadModel fill:#A5D6A7,stroke:#2E7D32,color:#000;
+    classDef Policy fill:#CE93D8,stroke:#6A1B9A,color:#000;
+    classDef ExternalSystem fill:#F48FB1,stroke:#AD1457,color:#000;
 ```
+
+The colors match the exporter output: brown actors, blue commands, yellow aggregates, teal invariants, orange events, lilac policies, green read models, pink external systems (grey value objects round out the set). The `%%{init: {"layout": "elk"}}%%` directive is omitted here so GitHub renders it; the exporter emits it by default.
 
 ## Why attributes, not interfaces or base classes
 
