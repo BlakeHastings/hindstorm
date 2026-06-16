@@ -122,8 +122,11 @@ Then `GET /domain-model?format=mermaid` (or `dot`, or `json`).
 
 ## Run the sample
 
-`samples/Hindstorm.Sample` is a small e-commerce ordering domain, fully annotated. Run it to see the
-storming model recovered from code and printed as Mermaid (and written as `.mmd`, `.dot`, and `.json`):
+`samples/Hindstorm.Sample` is a full order-to-cash e-commerce flow, fully annotated and split across
+bounded-context namespaces (Ordering, Payments, Inventory, Shipping, ReadModels). It exercises the whole
+vocabulary: four aggregates, a reactive policy chain (the saga), external systems (payment gateway,
+carrier, email provider), invariants, read models, and a handler-interface projection. Run it to see the
+~40-concept model recovered from code and printed as Mermaid (and written as `.mmd`, `.dot`, and `.json`):
 
 ```bash
 dotnet run --project samples/Hindstorm.Sample
