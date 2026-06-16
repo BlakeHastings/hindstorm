@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageId>Hindstorm.Annotations</PackageId>
+    <Description>Attributes that label domain types as event-storming concepts (aggregates, commands, events, policies) and declare the edges between them. Zero dependencies; reference this from your domain layer. Read back by the Hindstorm scanner to draw the storming wall from source.</Description>
+    <PackageTags>event-storming;ddd;domain-driven-design;attributes;reverse-engineering;diagram;architecture</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="PolySharp" PrivateAssets="all" />
+    <PackageReference Include="MinVer" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

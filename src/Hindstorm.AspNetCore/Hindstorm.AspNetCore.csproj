@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <PackageId>Hindstorm.AspNetCore</PackageId>
+    <Description>An ASP.NET Core endpoint for Hindstorm. Maps a development route that serves your recovered domain model as JSON, Mermaid, or Graphviz DOT, so you can pull the storming wall straight from a running app.</Description>
+    <PackageTags>event-storming;ddd;aspnetcore;endpoint;mermaid;graphviz;diagram</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Hindstorm\Hindstorm.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MinVer" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

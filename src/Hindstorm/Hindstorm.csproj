@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
+    <PackageId>Hindstorm</PackageId>
+    <Description>Reverse event storming for .NET. Reflects over Hindstorm.Annotations to recover your domain model from compiled assemblies, then exports it as JSON, Mermaid, or Graphviz DOT. Generate the storming wall from source instead of from a workshop.</Description>
+    <PackageTags>event-storming;ddd;domain-driven-design;mermaid;graphviz;reflection;diagram;architecture;reverse-engineering</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Hindstorm.Annotations\Hindstorm.Annotations.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Condition="'$(TargetFramework)' == 'netstandard2.0'" />
+    <PackageReference Include="PolySharp" PrivateAssets="all" />
+    <PackageReference Include="MinVer" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>
