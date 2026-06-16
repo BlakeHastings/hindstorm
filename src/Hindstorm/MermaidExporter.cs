@@ -7,12 +7,18 @@ namespace Hindstorm;
 /// spirit of a storming wall, untagged (inferred) nodes are dashed so missing labels stand out, and edges
 /// carry the relation name.
 /// </summary>
+/// <remarks>
+/// An edge is labelled with its explicit <see cref="DomainEdge.Label"/> when set, otherwise the relation's
+/// lower-case name (for example <see cref="RelationKind.ReactsTo"/> renders as <c>reacts to</c>). A double
+/// quote in a node name is escaped to <c>&amp;quot;</c>. An edge whose endpoint has no matching node is
+/// rendered against a dashed placeholder node labelled with that id, never thrown on.
+/// </remarks>
 public static class MermaidExporter
 {
     /// <summary>Renders the model as Mermaid flowchart source.</summary>
     public static string Export(DomainModel model)
     {
-        var ids = AssignIds(model);
+        var (ids, phantoms) = AssignIds(model);
         var builder = new StringBuilder();
         builder.AppendLine("flowchart LR");
 
@@ -21,6 +27,11 @@ public static class MermaidExporter
             var label = Escape(node.Name);
             builder.AppendLine($"    {ids[node.Id]}[\"{label}\"]:::{ClassFor(node)}");
         }
+
+        // An edge may reference an id with no declared node (for example a hand-built model). Render it
+        // as a dashed placeholder rather than throwing, so the edge survives and the gap is visible.
+        foreach (var id in phantoms)
+            builder.AppendLine($"    {ids[id]}[\"{Escape(id)}\"]:::inferred");
 
         if (model.Edges.Count > 0)
             builder.AppendLine();
@@ -37,13 +48,24 @@ public static class MermaidExporter
 
     private static string ClassFor(DomainNode node) => node.Inferred ? "inferred" : node.Kind.ToString();
 
-    private static Dictionary<string, string> AssignIds(DomainModel model)
+    private static (Dictionary<string, string> Ids, List<string> Phantoms) AssignIds(DomainModel model)
     {
         var ids = new Dictionary<string, string>(StringComparer.Ordinal);
+        var phantoms = new List<string>();
         var index = 0;
         foreach (var node in model.Nodes)
-            ids[node.Id] = $"n{index++}";
-        return ids;
+            if (!ids.ContainsKey(node.Id))
+                ids[node.Id] = $"n{index++}";
+
+        foreach (var edge in model.Edges)
+            foreach (var endpoint in new[] { edge.FromId, edge.ToId })
+                if (!ids.ContainsKey(endpoint))
+                {
+                    ids[endpoint] = $"n{index++}";
+                    phantoms.Add(endpoint);
+                }
+
+        return (ids, phantoms);
     }
 
     private static string Escape(string value) => value.Replace("\"", "&quot;");

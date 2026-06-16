@@ -6,15 +6,33 @@ namespace Hindstorm;
 /// Renders a <see cref="DomainModel"/> as Graphviz DOT. Concepts are filled by kind, untagged (inferred)
 /// nodes are dashed, and edges carry the relation name.
 /// </summary>
+/// <remarks>
+/// An edge is labelled with its explicit <see cref="DomainEdge.Label"/> when set, otherwise the relation's
+/// lower-case name (for example <see cref="RelationKind.ReactsTo"/> renders as <c>reacts to</c>).
+/// Backslashes and double quotes in a node name are backslash-escaped. An edge whose endpoint has no
+/// matching node is rendered against a dashed placeholder node labelled with that id, never thrown on.
+/// </remarks>
 public static class DotExporter
 {
     /// <summary>Renders the model as DOT digraph source.</summary>
     public static string Export(DomainModel model)
     {
         var ids = new Dictionary<string, string>(StringComparer.Ordinal);
+        var phantoms = new List<string>();
         var index = 0;
         foreach (var node in model.Nodes)
-            ids[node.Id] = $"n{index++}";
+            if (!ids.ContainsKey(node.Id))
+                ids[node.Id] = $"n{index++}";
+
+        // An edge may reference an id with no declared node (for example a hand-built model). Give it an
+        // id so the edge still renders, and emit a dashed placeholder for it rather than throwing.
+        foreach (var edge in model.Edges)
+            foreach (var endpoint in new[] { edge.FromId, edge.ToId })
+                if (!ids.ContainsKey(endpoint))
+                {
+                    ids[endpoint] = $"n{index++}";
+                    phantoms.Add(endpoint);
+                }
 
         var builder = new StringBuilder();
         builder.AppendLine("digraph DomainModel {");
@@ -29,6 +47,10 @@ public static class DotExporter
             builder.AppendLine(
                 $"    {ids[node.Id]} [label=\"{Escape(node.Name)}\", fillcolor=\"{fill}\", color=\"{stroke}\", style={style}];");
         }
+
+        foreach (var id in phantoms)
+            builder.AppendLine(
+                $"    {ids[id]} [label=\"{Escape(id)}\", fillcolor=\"#FFFFFF\", color=\"#9E9E9E\", style=\"filled,rounded,dashed\"];");
 
         builder.AppendLine();
         foreach (var edge in model.Edges)
