@@ -31,13 +31,18 @@ public static class HindstormEndpointExtensions
                 ? value.ToString()
                 : options.DefaultFormat;
 
-            return Render(model.Value, format);
+            // Mermaid defaults to the ELK renderer; ?layout=dagre opts out.
+            var layout = string.Equals(request.Query["layout"], "dagre", StringComparison.OrdinalIgnoreCase)
+                ? MermaidLayout.Dagre
+                : MermaidLayout.Elk;
+
+            return Render(model.Value, format, layout);
         });
     }
 
-    private static IResult Render(DomainModel model, string format) => format.ToLowerInvariant() switch
+    private static IResult Render(DomainModel model, string format, MermaidLayout layout) => format.ToLowerInvariant() switch
     {
-        "mermaid" => Results.Text(MermaidExporter.Export(model), "text/plain"),
+        "mermaid" => Results.Text(MermaidExporter.Export(model, layout), "text/plain"),
         "dot" => Results.Text(DotExporter.Export(model), "text/vnd.graphviz"),
         "json" => Results.Text(JsonExporter.Export(model), "application/json"),
         _ => Results.BadRequest($"Unknown format '{format}'. Use json, mermaid, or dot."),

@@ -83,7 +83,7 @@ public static class DotExporter
             ConceptKind.ReadModel => ("#A5D6A7", "#2E7D32"),
             ConceptKind.ValueObject => ("#ECEFF1", "#607D8B"),
             ConceptKind.ExternalSystem => ("#F48FB1", "#AD1457"),
-            ConceptKind.Actor => ("#FFF59D", "#F9A825"),
+            ConceptKind.Actor => ("#BCAAA4", "#4E342E"),
             _ => ("#ECEFF1", "#607D8B"),
         };
 

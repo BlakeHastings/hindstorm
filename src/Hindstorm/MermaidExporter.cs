@@ -15,16 +15,24 @@ namespace Hindstorm;
 /// </remarks>
 public static class MermaidExporter
 {
-    /// <summary>Renders the model as Mermaid flowchart source.</summary>
-    public static string Export(DomainModel model)
+    /// <summary>Renders the model as Mermaid flowchart source, laid out with the ELK engine.</summary>
+    public static string Export(DomainModel model) => Export(model, MermaidLayout.Elk);
+
+    /// <summary>Renders the model as Mermaid flowchart source using the given layout engine.</summary>
+    public static string Export(DomainModel model, MermaidLayout layout)
     {
-        // Lay the graph out from its entry points so the flow reads left to right.
-        var layout = GraphLayout.Order(model);
-        var (ids, phantoms) = AssignIds(layout);
+        // Order nodes and edges from the graph's entry points so the flow reads left to right.
+        var ordered = GraphLayout.Order(model);
+        var (ids, phantoms) = AssignIds(ordered);
         var builder = new StringBuilder();
+
+        // ELK lays cyclic, layered flows out far more cleanly than Mermaid's default (dagre) renderer; it
+        // is the default. The directive must come first. Pass MermaidLayout.Dagre to opt out.
+        if (layout == MermaidLayout.Elk)
+            builder.AppendLine("%%{init: {\"layout\": \"elk\"}}%%");
         builder.AppendLine("flowchart LR");
 
-        foreach (var node in layout.Nodes)
+        foreach (var node in ordered.Nodes)
         {
             var label = Escape(node.Name);
             builder.AppendLine($"    {ids[node.Id]}[\"{label}\"]:::{ClassFor(node)}");
@@ -35,10 +43,10 @@ public static class MermaidExporter
         foreach (var id in phantoms)
             builder.AppendLine($"    {ids[id]}[\"{Escape(id)}\"]:::inferred");
 
-        if (layout.Edges.Count > 0)
+        if (ordered.Edges.Count > 0)
             builder.AppendLine();
 
-        foreach (var edge in layout.Edges)
+        foreach (var edge in ordered.Edges)
             builder.AppendLine($"    {ids[edge.FromId]} -->|{EdgeLabel.For(edge)}| {ids[edge.ToId]}");
 
         builder.AppendLine();
@@ -82,7 +90,7 @@ public static class MermaidExporter
         "classDef ReadModel fill:#A5D6A7,stroke:#2E7D32,color:#000;",
         "classDef ValueObject fill:#ECEFF1,stroke:#607D8B,color:#000;",
         "classDef ExternalSystem fill:#F48FB1,stroke:#AD1457,color:#000;",
-        "classDef Actor fill:#FFF59D,stroke:#F9A825,color:#000;",
+        "classDef Actor fill:#BCAAA4,stroke:#4E342E,color:#000;",
         "classDef inferred fill:#FFFFFF,stroke:#9E9E9E,stroke-dasharray:4 3,color:#616161;",
     ];
 }
