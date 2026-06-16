@@ -107,6 +107,22 @@ if (app.Environment.IsDevelopment())
 
 Then `GET /domain-model?format=mermaid` (or `dot`, or `json`).
 
+## Run the sample
+
+`samples/Hindstorm.Sample` is a small e-commerce ordering domain, fully annotated. Run it to see the
+storming model recovered from code and printed as Mermaid (and written as `.mmd`, `.dot`, and `.json`):
+
+```bash
+dotnet run --project samples/Hindstorm.Sample
+```
+
+Paste the Mermaid into <https://mermaid.live> to see the wall.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the build, the Conventional Commits format, and how releases are
+cut and published. Conventions for AI coding agents live in [AGENTS.md](AGENTS.md).
+
 ## License
 
 MIT
