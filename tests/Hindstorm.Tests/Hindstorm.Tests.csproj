@@ -18,6 +18,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Hindstorm\Hindstorm.csproj" />
+    <ProjectReference Include="..\..\src\Hindstorm.AspNetCore\Hindstorm.AspNetCore.csproj" />
+  </ItemGroup>
+
+  <!-- For the endpoint integration tests (TestServer + minimal hosting). -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" />
   </ItemGroup>
 
 </Project>

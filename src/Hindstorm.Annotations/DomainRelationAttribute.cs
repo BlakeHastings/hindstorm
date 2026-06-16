@@ -14,6 +14,7 @@ public abstract class DomainRelationAttribute : Attribute
     /// <param name="kind">The kind of relationship.</param>
     /// <param name="direction">Which end of the edge the declaring type sits on.</param>
     /// <param name="target">The concept at the other end of the edge.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="target"/> is null.</exception>
     protected DomainRelationAttribute(RelationKind kind, RelationDirection direction, Type target)
     {
         Kind = kind;

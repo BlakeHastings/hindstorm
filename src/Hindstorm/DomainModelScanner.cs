@@ -9,6 +9,17 @@ namespace Hindstorm;
 /// implied by an optional event-handler interface. Method bodies are never read, so every edge is one
 /// that was stated as metadata.
 /// </summary>
+/// <remarks>
+/// Guarantees a caller can rely on:
+/// <list type="bullet">
+/// <item>A relation attribute is only read when it is declared on a tagged concept or one of that
+/// concept's members. A relation on an untagged type contributes nothing.</item>
+/// <item>When nothing in the assemblies is tagged, the result is an empty model (no nodes, no edges).</item>
+/// <item>Identical relations (same endpoints, relation, and member) collapse to a single edge.</item>
+/// <item>Output is deterministic: nodes are ordered by namespace then name, edges by endpoints then
+/// relation, so two scans of the same input produce identical models.</item>
+/// </list>
+/// </remarks>
 public static class DomainModelScanner
 {
     /// <summary>Scans a single assembly with default options.</summary>

@@ -13,6 +13,8 @@ public sealed class ScannerOptions
     /// An open generic event-handler interface, for example <c>typeof(IDomainEventHandler&lt;&gt;)</c>.
     /// When set, every closed implementation found becomes a "reacts to" edge from the event to the
     /// handler, so the reaction half of the flow is recovered for free without annotating each handler.
+    /// Ignored unless it is an open generic type definition; abstract types and interfaces are never
+    /// treated as handlers.
     /// </summary>
     public Type? HandlerInterface { get; set; }
 
