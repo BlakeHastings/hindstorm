@@ -18,11 +18,13 @@ public static class MermaidExporter
     /// <summary>Renders the model as Mermaid flowchart source.</summary>
     public static string Export(DomainModel model)
     {
-        var (ids, phantoms) = AssignIds(model);
+        // Lay the graph out from its entry points so the flow reads left to right.
+        var layout = GraphLayout.Order(model);
+        var (ids, phantoms) = AssignIds(layout);
         var builder = new StringBuilder();
         builder.AppendLine("flowchart LR");
 
-        foreach (var node in model.Nodes)
+        foreach (var node in layout.Nodes)
         {
             var label = Escape(node.Name);
             builder.AppendLine($"    {ids[node.Id]}[\"{label}\"]:::{ClassFor(node)}");
@@ -33,10 +35,10 @@ public static class MermaidExporter
         foreach (var id in phantoms)
             builder.AppendLine($"    {ids[id]}[\"{Escape(id)}\"]:::inferred");
 
-        if (model.Edges.Count > 0)
+        if (layout.Edges.Count > 0)
             builder.AppendLine();
 
-        foreach (var edge in model.Edges)
+        foreach (var edge in layout.Edges)
             builder.AppendLine($"    {ids[edge.FromId]} -->|{EdgeLabel.For(edge)}| {ids[edge.ToId]}");
 
         builder.AppendLine();
@@ -48,16 +50,16 @@ public static class MermaidExporter
 
     private static string ClassFor(DomainNode node) => node.Inferred ? "inferred" : node.Kind.ToString();
 
-    private static (Dictionary<string, string> Ids, List<string> Phantoms) AssignIds(DomainModel model)
+    private static (Dictionary<string, string> Ids, List<string> Phantoms) AssignIds(GraphLayout.Ordered layout)
     {
         var ids = new Dictionary<string, string>(StringComparer.Ordinal);
         var phantoms = new List<string>();
         var index = 0;
-        foreach (var node in model.Nodes)
+        foreach (var node in layout.Nodes)
             if (!ids.ContainsKey(node.Id))
                 ids[node.Id] = $"n{index++}";
 
-        foreach (var edge in model.Edges)
+        foreach (var edge in layout.Edges)
             foreach (var endpoint in new[] { edge.FromId, edge.ToId })
                 if (!ids.ContainsKey(endpoint))
                 {

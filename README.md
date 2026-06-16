@@ -94,7 +94,7 @@ Untagged types referenced by a relation still appear, as **dashed inferred nodes
 
 ## What it captures, and what it can't
 
-Hindstorm recovers the *behavioral* model from code: the concepts and the flow between them. That is most of an Event Storming wall, but a wall built in a workshop carries narrative and spatial meaning that code does not, so a recovered model is a **topological graph, not a timeline**. It deliberately does not invent:
+Hindstorm recovers the *behavioral* model from code: the concepts and the flow between them. That is most of an Event Storming wall, but a wall built in a workshop carries narrative and spatial meaning that code does not, so a recovered model is a **topological graph, not a timeline**. The exporters anchor entry points (actors, initiating systems) on the left and lay the flow out rightward, but horizontal position reflects reachability, not chronology. The model deliberately does not invent:
 
 - **Temporal order** — Event Storming arranges events left to right in the order they happen. Edges encode causality, not chronology, so the layout is not a timeline.
 - **Pivotal events and bounded contexts** — which events are turning points, and where one bounded context ends and the next begins, are modeling judgments that live in people's heads, not in attributes.
