@@ -48,7 +48,7 @@ public static class DomainModelScanner
         {
             var concept = type.GetCustomAttribute<DomainConceptAttribute>(inherit: false);
             if (concept is not null)
-                nodes[IdOf(type)] = NodeFor(type, concept);
+                nodes[IdOf(type)] = NodeFor(type, concept, options);
         }
 
         // Pass 2: edges declared on a tagged concept or one of its methods.
@@ -145,11 +145,15 @@ public static class DomainModelScanner
         if (!options.InferUntaggedEndpoints)
             return;
 
-        nodes[id] = new DomainNode(id, type.Name, inferredKind, type.Namespace, Description: null, Inferred: true);
+        nodes[id] = new DomainNode(
+            id, type.Name, inferredKind, type.Namespace, Description: null, Inferred: true,
+            Context: options.ContextFromNamespace?.Invoke(type.Namespace));
     }
 
-    private static DomainNode NodeFor(Type type, DomainConceptAttribute concept)
-        => new(IdOf(type), concept.Name ?? type.Name, concept.Kind, type.Namespace, concept.Description);
+    private static DomainNode NodeFor(Type type, DomainConceptAttribute concept, ScannerOptions options)
+        => new(
+            IdOf(type), concept.Name ?? type.Name, concept.Kind, type.Namespace, concept.Description,
+            Context: concept.Context ?? options.ContextFromNamespace?.Invoke(type.Namespace));
 
     private static ConceptKind InferredKindFor(RelationKind relation) => relation switch
     {

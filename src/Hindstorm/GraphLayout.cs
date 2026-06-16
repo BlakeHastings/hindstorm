@@ -91,4 +91,49 @@ internal static class GraphLayout
 
         return new Ordered(orderedNodes, orderedEdges, entryIds);
     }
+
+    internal readonly record struct Grouping(
+        IReadOnlyList<(string Context, IReadOnlyList<DomainNode> Nodes)> Groups,
+        IReadOnlyList<DomainNode> Ungrouped,
+        bool AnyContext);
+
+    /// <summary>
+    /// Buckets nodes by their declared bounded context, preserving the given order within each bucket and
+    /// ordering the buckets by first appearance. Nodes with no context are returned separately. When no
+    /// node declares a context, <see cref="Grouping.AnyContext"/> is false and everything is ungrouped, so
+    /// an exporter can skip drawing boundaries entirely.
+    /// </summary>
+    public static Grouping GroupByContext(IReadOnlyList<DomainNode> nodes)
+    {
+        if (!nodes.Any(n => n.Context is not null))
+            return new Grouping([], nodes, false);
+
+        var order = new List<string>();
+        var buckets = new Dictionary<string, List<DomainNode>>(StringComparer.Ordinal);
+        var ungrouped = new List<DomainNode>();
+
+        foreach (var node in nodes)
+        {
+            if (node.Context is null)
+            {
+                ungrouped.Add(node);
+                continue;
+            }
+
+            if (!buckets.TryGetValue(node.Context, out var bucket))
+            {
+                bucket = [];
+                buckets[node.Context] = bucket;
+                order.Add(node.Context);
+            }
+
+            bucket.Add(node);
+        }
+
+        var groups = order
+            .Select(c => (c, (IReadOnlyList<DomainNode>)buckets[c]))
+            .ToList();
+
+        return new Grouping(groups, ungrouped, true);
+    }
 }

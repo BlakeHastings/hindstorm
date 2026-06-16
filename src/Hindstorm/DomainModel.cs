@@ -14,13 +14,19 @@ namespace Hindstorm;
 /// concept attribute. An inferred node is a hint that a type is referenced in a relationship but was
 /// never tagged.
 /// </param>
+/// <param name="Context">
+/// The bounded context this concept belongs to, or null when none was declared. Comes from the concept
+/// attribute's <c>Context</c> or, failing that, <c>ScannerOptions.ContextFromNamespace</c>. Used to draw
+/// boundary boxes that group the wall by context.
+/// </param>
 public sealed record DomainNode(
     string Id,
     string Name,
     ConceptKind Kind,
     string? Namespace,
     string? Description,
-    bool Inferred = false);
+    bool Inferred = false,
+    string? Context = null);
 
 /// <summary>
 /// A directed edge in the recovered model: one relationship between two concepts, already oriented in

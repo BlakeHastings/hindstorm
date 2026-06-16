@@ -32,10 +32,27 @@ public static class MermaidExporter
             builder.AppendLine("%%{init: {\"layout\": \"elk\"}}%%");
         builder.AppendLine("flowchart LR");
 
-        foreach (var node in ordered.Nodes)
+        // When contexts are declared, wrap each in a labelled subgraph so the wall reads as bounded
+        // contexts; uncontexted nodes sit at the top level.
+        var grouping = GraphLayout.GroupByContext(ordered.Nodes);
+        if (grouping.AnyContext)
         {
-            var label = Escape(node.Name);
-            builder.AppendLine($"    {ids[node.Id]}[\"{label}\"]:::{ClassFor(node)}");
+            var contextIndex = 0;
+            foreach (var (context, contextNodes) in grouping.Groups)
+            {
+                builder.AppendLine($"    subgraph ctx{contextIndex++}[\"{Escape(context)}\"]");
+                foreach (var node in contextNodes)
+                    builder.AppendLine($"        {NodeLine(ids, node)}");
+                builder.AppendLine("    end");
+            }
+
+            foreach (var node in grouping.Ungrouped)
+                builder.AppendLine($"    {NodeLine(ids, node)}");
+        }
+        else
+        {
+            foreach (var node in ordered.Nodes)
+                builder.AppendLine($"    {NodeLine(ids, node)}");
         }
 
         // An edge may reference an id with no declared node (for example a hand-built model). Render it
@@ -55,6 +72,9 @@ public static class MermaidExporter
 
         return builder.ToString();
     }
+
+    private static string NodeLine(Dictionary<string, string> ids, DomainNode node)
+        => $"{ids[node.Id]}[\"{Escape(node.Name)}\"]:::{ClassFor(node)}";
 
     private static string ClassFor(DomainNode node) => node.Inferred ? "inferred" : node.Kind.ToString();
 
