@@ -33,6 +33,15 @@ internal static class GraphLayout
                 incoming[edge.ToId]++;
         }
 
+        // Order each node's out-edges so the ones pointing at a terminal (a node with no outgoing edges
+        // of its own, like an invariant or a read model) come first. Renderers float the first-declared
+        // out-edge's target to the top, so dead-ends sit above the node that continues the flow and the
+        // graph expands down and to the right. OrderBy is stable, so model order is kept within a group.
+        var outDegree = outgoing.ToDictionary(kv => kv.Key, kv => kv.Value.Count, StringComparer.Ordinal);
+        bool IsTerminal(string id) => !outDegree.TryGetValue(id, out var degree) || degree == 0;
+        foreach (var id in outgoing.Keys.ToList())
+            outgoing[id] = [.. outgoing[id].OrderBy(e => IsTerminal(e.ToId) ? 0 : 1)];
+
         // Entry points: real nodes nothing points at that do start a flow (an isolated node with no
         // edges at all is not an entry point). Kept in the model's order.
         var entryIds = model.Nodes

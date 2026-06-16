@@ -40,6 +40,8 @@ public static class DotExporter
         var builder = new StringBuilder();
         builder.AppendLine("digraph DomainModel {");
         builder.AppendLine("    rankdir=LR;");
+        // Honor the declared out-edge order so terminal targets (declared first) sit above the flow.
+        builder.AppendLine("    ordering=out;");
         builder.AppendLine("    node [shape=box, style=\"filled,rounded\", fontname=\"sans-serif\"];");
         builder.AppendLine();
 

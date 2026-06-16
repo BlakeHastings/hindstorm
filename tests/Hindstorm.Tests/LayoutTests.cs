@@ -45,6 +45,46 @@ public sealed class LayoutTests
         Assert.Contains("{ rank=source; n0; }", dot);
     }
 
+    // order -> credit (terminal invariant) and order -> placed (continues: placed -> view).
+    private static DomainModel BranchingFlow() => new(
+        new[]
+        {
+            new DomainNode("Ns.Order", "Order", ConceptKind.Aggregate, "Ns", null),
+            new DomainNode("Ns.Credit", "Credit", ConceptKind.Invariant, "Ns", null),
+            new DomainNode("Ns.Placed", "Placed", ConceptKind.DomainEvent, "Ns", null),
+            new DomainNode("Ns.View", "View", ConceptKind.ReadModel, "Ns", null),
+        },
+        new[]
+        {
+            new DomainEdge("Ns.Order", "Ns.Placed", RelationKind.Raises),
+            new DomainEdge("Ns.Order", "Ns.Credit", RelationKind.Enforces),
+            new DomainEdge("Ns.Placed", "Ns.View", RelationKind.Updates),
+        });
+
+    [Fact]
+    public void Edges_to_terminal_nodes_are_emitted_before_edges_that_continue_the_flow()
+    {
+        // Even though the raises edge is declared first in the model, the enforces edge (to a terminal
+        // invariant) is ordered first so the dead-end floats above the continuing flow.
+        var dot = DotExporter.Export(BranchingFlow());
+        var mermaid = MermaidExporter.Export(BranchingFlow());
+
+        Assert.True(
+            dot.IndexOf("label=\"enforces\"", StringComparison.Ordinal) <
+            dot.IndexOf("label=\"raises\"", StringComparison.Ordinal),
+            "DOT should emit the terminal (enforces) edge before the continuing (raises) edge");
+        Assert.True(
+            mermaid.IndexOf("|enforces|", StringComparison.Ordinal) <
+            mermaid.IndexOf("|raises|", StringComparison.Ordinal),
+            "Mermaid should emit the terminal (enforces) edge before the continuing (raises) edge");
+    }
+
+    [Fact]
+    public void Dot_declares_out_edge_ordering()
+    {
+        Assert.Contains("ordering=out;", DotExporter.Export(BranchingFlow()));
+    }
+
     [Fact]
     public void An_isolated_node_is_not_pinned_as_an_entry_point()
     {
