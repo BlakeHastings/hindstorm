@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.0](https://github.com/BlakeHastings/hindstorm/compare/v0.1.0...v0.2.0) (2026-06-16)
+
+
+### Features
+
+* add Invariant concept, distinct from Policy ([40900b1](https://github.com/BlakeHastings/hindstorm/commit/40900b15c2e600a1aa188a2a148723d85e2e537c))
+* default Mermaid to the ELK renderer and distinguish actor color ([1761add](https://github.com/BlakeHastings/hindstorm/commit/1761add4f25245f13ba9741ebb91bf0246cf9394))
+* float terminal nodes above the continuing flow ([6cdc1b9](https://github.com/BlakeHastings/hindstorm/commit/6cdc1b9ecccb0bf3e6c22d6351e28992a1faf7f0))
+* lay exporters out from entry points, left to right ([afd9bc5](https://github.com/BlakeHastings/hindstorm/commit/afd9bc5dd089d96731f5f9c974b51e949e2f97a1))
+
 ## 0.1.0 (2026-06-16)
 
 
