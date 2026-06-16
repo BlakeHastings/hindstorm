@@ -157,7 +157,7 @@ public static class DomainModelScanner
         RelationKind.Handles => ConceptKind.Command,
         RelationKind.ReactsTo => ConceptKind.DomainEvent,
         RelationKind.Issues => ConceptKind.Command,
-        RelationKind.Enforces => ConceptKind.Policy,
+        RelationKind.Enforces => ConceptKind.Invariant,
         RelationKind.Updates => ConceptKind.ReadModel,
         _ => ConceptKind.ValueObject,
     };

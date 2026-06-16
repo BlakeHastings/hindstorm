@@ -90,6 +90,7 @@ namespace Hindstorm.Tests
             yield return new object[] { typeof(ScannerContract.Fixtures.SampleCommand), ConceptKind.Command };
             yield return new object[] { typeof(ScannerContract.Fixtures.SampleEvent), ConceptKind.DomainEvent };
             yield return new object[] { typeof(ScannerContract.Fixtures.SamplePolicy), ConceptKind.Policy };
+            yield return new object[] { typeof(ScannerContract.Fixtures.SampleInvariant), ConceptKind.Invariant };
             yield return new object[] { typeof(ScannerContract.Fixtures.SampleReadModel), ConceptKind.ReadModel };
             yield return new object[] { typeof(ScannerContract.Fixtures.SampleValueObject), ConceptKind.ValueObject };
             yield return new object[] { typeof(ScannerContract.Fixtures.SampleExternalSystem), ConceptKind.ExternalSystem };
@@ -175,15 +176,28 @@ namespace Hindstorm.Tests
         }
 
         [Fact]
-        public void Enforces_on_method_orients_declaring_to_policy()
+        public void Enforces_on_method_orients_declaring_to_invariant()
         {
             var model = ScanOnly(
                 typeof(ScannerContract.Fixtures.EnforcerAggregate),
-                typeof(ScannerContract.Fixtures.SamplePolicy));
+                typeof(ScannerContract.Fixtures.SampleInvariant));
 
             var edge = Assert.Single(model.Edges, e => e.Relation == RelationKind.Enforces);
             Assert.Equal(typeof(ScannerContract.Fixtures.EnforcerAggregate).FullName, edge.FromId);
-            Assert.Equal(typeof(ScannerContract.Fixtures.SamplePolicy).FullName, edge.ToId);
+            Assert.Equal(typeof(ScannerContract.Fixtures.SampleInvariant).FullName, edge.ToId);
+        }
+
+        [Fact]
+        public void Enforces_target_that_is_untagged_is_inferred_as_an_invariant()
+        {
+            // EnforcerOfUntagged enforces UntaggedInvariant, which carries no concept attribute.
+            var model = ScanOnly(
+                typeof(ScannerContract.Fixtures.EnforcerOfUntagged),
+                typeof(ScannerContract.Fixtures.UntaggedInvariant));
+
+            var node = model.Nodes.Single(n => n.Id == typeof(ScannerContract.Fixtures.UntaggedInvariant).FullName);
+            Assert.True(node.Inferred);
+            Assert.Equal(ConceptKind.Invariant, node.Kind);
         }
 
         [Fact]

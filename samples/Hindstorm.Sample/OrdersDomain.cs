@@ -32,8 +32,10 @@ public sealed record OrderShipped(Guid OrderId, DateTimeOffset ShippedAt);
 [ValueObject]
 public sealed record Money(decimal Amount, string Currency);
 
-[Policy]
-public static class StockPolicy
+// A command-time business rule the Order aggregate checks while placing an order: an invariant, not a
+// reactive policy. It is enforced before any event is raised and does not issue a command.
+[Invariant]
+public static class StockAvailability
 {
     public static bool InStock(Guid productId) => true;
 }
@@ -58,7 +60,7 @@ public sealed class Order
 {
     [Handles(typeof(PlaceOrder))]
     [Raises(typeof(OrderPlaced))]
-    [Enforces(typeof(StockPolicy))]
+    [Enforces(typeof(StockAvailability))]
     public OrderPlaced Place(PlaceOrder command)
         => new(Guid.NewGuid(), command.CustomerId, new Money(0m, "USD"));
 }

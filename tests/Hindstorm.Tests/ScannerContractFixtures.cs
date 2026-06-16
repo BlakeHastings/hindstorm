@@ -71,11 +71,24 @@ namespace Hindstorm.Tests.ScannerContract.Fixtures
         public void Decide() { }
     }
 
-    // Enforces: declaring -> policy (FromDeclaring).
+    [Invariant]
+    public class SampleInvariant { }
+
+    // Enforces: declaring -> invariant (FromDeclaring).
     [Aggregate]
     public class EnforcerAggregate
     {
-        [Enforces(typeof(SamplePolicy))]
+        [Enforces(typeof(SampleInvariant))]
+        public void Check() { }
+    }
+
+    // An untagged enforce target, to verify it is inferred as an Invariant.
+    public class UntaggedInvariant { }
+
+    [Aggregate]
+    public class EnforcerOfUntagged
+    {
+        [Enforces(typeof(UntaggedInvariant))]
         public void Check() { }
     }
 

@@ -56,7 +56,9 @@ public sealed class RefinementPolicy
 
 ### Concept (node) attributes
 
-`[Aggregate]` `[Command]` `[DomainEvent]` `[Policy]` `[ReadModel]` `[ValueObject]` `[ExternalSystem]` `[Actor]`
+`[Aggregate]` `[Command]` `[DomainEvent]` `[Policy]` `[Invariant]` `[ReadModel]` `[ValueObject]` `[ExternalSystem]` `[Actor]`
+
+`[Policy]` is a *reactive* rule ("whenever this event, issue that command"); `[Invariant]` is a command-time business rule an aggregate enforces before raising an event. They are different concepts and kept distinct, in line with Event Storming.
 
 ### Relation (edge) attributes
 
@@ -66,7 +68,7 @@ public sealed class RefinementPolicy
 | `[Handles(typeof(C))]` | command → declaring |
 | `[ReactsTo(typeof(E))]` | event → declaring |
 | `[Issues(typeof(C))]` | declaring → command |
-| `[Enforces(typeof(P))]` | declaring → policy |
+| `[Enforces(typeof(I))]` | declaring → invariant |
 | `[Updates(typeof(R))]` | declaring → read model |
 
 Relation attributes go on either the type or the specific method that owns the relationship; method placement records the member name on the edge.
@@ -89,6 +91,17 @@ string json    = JsonExporter.Export(model);
 ```
 
 Untagged types referenced by a relation still appear, as **dashed inferred nodes**, so a forgotten label shows up on the diagram instead of vanishing. Turn that off with `options.InferUntaggedEndpoints = false`.
+
+## What it captures, and what it can't
+
+Hindstorm recovers the *behavioral* model from code: the concepts and the flow between them. That is most of an Event Storming wall, but a wall built in a workshop carries narrative and spatial meaning that code does not, so a recovered model is a **topological graph, not a timeline**. It deliberately does not invent:
+
+- **Temporal order** — Event Storming arranges events left to right in the order they happen. Edges encode causality, not chronology, so the layout is not a timeline.
+- **Pivotal events and bounded contexts** — which events are turning points, and where one bounded context ends and the next begins, are modeling judgments that live in people's heads, not in attributes.
+- **Swimlanes** — parallel or alternative process streams are not distinguished.
+- **Hotspots** — friction, disagreement, and open questions are the human heart of a storm and cannot come from code at all.
+
+Treat the output as an always-true scaffold of the model, the starting point for a conversation, not a replacement for one. Tactical structure (entities, value objects) is also outside the behavioral view; a `[ValueObject]` is supported but sits apart from the flow.
 
 ## Serve it from a running app
 

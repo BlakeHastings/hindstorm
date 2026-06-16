@@ -67,12 +67,12 @@ public sealed class IssuesAttribute : DomainRelationAttribute
     public IssuesAttribute(Type commandType) : base(RelationKind.Issues, RelationDirection.FromDeclaring, commandType) { }
 }
 
-/// <summary>Declares that the annotated type or method enforces a policy.</summary>
+/// <summary>Declares that the annotated type or method enforces an invariant.</summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Method, AllowMultiple = true, Inherited = false)]
 public sealed class EnforcesAttribute : DomainRelationAttribute
 {
-    /// <param name="policyType">The policy enforced.</param>
-    public EnforcesAttribute(Type policyType) : base(RelationKind.Enforces, RelationDirection.FromDeclaring, policyType) { }
+    /// <param name="invariantType">The invariant enforced.</param>
+    public EnforcesAttribute(Type invariantType) : base(RelationKind.Enforces, RelationDirection.FromDeclaring, invariantType) { }
 }
 
 /// <summary>Declares that the annotated type or method updates a read model.</summary>

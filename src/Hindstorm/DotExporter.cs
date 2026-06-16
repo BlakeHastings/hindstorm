@@ -68,6 +68,7 @@ public static class DotExporter
             ConceptKind.Command => ("#90CAF9", "#1565C0"),
             ConceptKind.DomainEvent => ("#FFB74D", "#E65100"),
             ConceptKind.Policy => ("#CE93D8", "#6A1B9A"),
+            ConceptKind.Invariant => ("#80CBC4", "#00695C"),
             ConceptKind.ReadModel => ("#A5D6A7", "#2E7D32"),
             ConceptKind.ValueObject => ("#ECEFF1", "#607D8B"),
             ConceptKind.ExternalSystem => ("#F48FB1", "#AD1457"),

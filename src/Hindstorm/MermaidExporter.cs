@@ -76,6 +76,7 @@ public static class MermaidExporter
         "classDef Command fill:#90CAF9,stroke:#1565C0,color:#000;",
         "classDef DomainEvent fill:#FFB74D,stroke:#E65100,color:#000;",
         "classDef Policy fill:#CE93D8,stroke:#6A1B9A,color:#000;",
+        "classDef Invariant fill:#80CBC4,stroke:#00695C,color:#000;",
         "classDef ReadModel fill:#A5D6A7,stroke:#2E7D32,color:#000;",
         "classDef ValueObject fill:#ECEFF1,stroke:#607D8B,color:#000;",
         "classDef ExternalSystem fill:#F48FB1,stroke:#AD1457,color:#000;",
