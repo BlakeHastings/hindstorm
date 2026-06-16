@@ -29,4 +29,12 @@ public enum ConceptKind
 
     /// <summary>A person or role that issues commands (storming: small yellow).</summary>
     Actor,
+
+    /// <summary>
+    /// A constraint an aggregate enforces while handling a command, before any event is raised (a DDD
+    /// invariant; in Event Storming this is a "business rule"). Distinct from a <see cref="Policy"/>:
+    /// an invariant governs whether a command is allowed to succeed, it is not triggered by an event and
+    /// does not issue a command.
+    /// </summary>
+    Invariant,
 }

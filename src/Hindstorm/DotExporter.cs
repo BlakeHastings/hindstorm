@@ -17,16 +17,19 @@ public static class DotExporter
     /// <summary>Renders the model as DOT digraph source.</summary>
     public static string Export(DomainModel model)
     {
+        // Lay the graph out from its entry points so the flow reads left to right.
+        var layout = GraphLayout.Order(model);
+
         var ids = new Dictionary<string, string>(StringComparer.Ordinal);
         var phantoms = new List<string>();
         var index = 0;
-        foreach (var node in model.Nodes)
+        foreach (var node in layout.Nodes)
             if (!ids.ContainsKey(node.Id))
                 ids[node.Id] = $"n{index++}";
 
         // An edge may reference an id with no declared node (for example a hand-built model). Give it an
         // id so the edge still renders, and emit a dashed placeholder for it rather than throwing.
-        foreach (var edge in model.Edges)
+        foreach (var edge in layout.Edges)
             foreach (var endpoint in new[] { edge.FromId, edge.ToId })
                 if (!ids.ContainsKey(endpoint))
                 {
@@ -37,10 +40,12 @@ public static class DotExporter
         var builder = new StringBuilder();
         builder.AppendLine("digraph DomainModel {");
         builder.AppendLine("    rankdir=LR;");
+        // Honor the declared out-edge order so terminal targets (declared first) sit above the flow.
+        builder.AppendLine("    ordering=out;");
         builder.AppendLine("    node [shape=box, style=\"filled,rounded\", fontname=\"sans-serif\"];");
         builder.AppendLine();
 
-        foreach (var node in model.Nodes)
+        foreach (var node in layout.Nodes)
         {
             var (fill, stroke) = Palette(node);
             var style = node.Inferred ? "\"filled,rounded,dashed\"" : "\"filled,rounded\"";
@@ -52,8 +57,16 @@ public static class DotExporter
             builder.AppendLine(
                 $"    {ids[id]} [label=\"{Escape(id)}\", fillcolor=\"#FFFFFF\", color=\"#9E9E9E\", style=\"filled,rounded,dashed\"];");
 
+        // Pin entry points (nodes with no incoming edge) to the leftmost rank, so the flow starts there.
+        if (layout.EntryIds.Count > 0)
+        {
+            var entries = string.Join(" ", layout.EntryIds.Select(id => ids[id] + ";"));
+            builder.AppendLine();
+            builder.AppendLine($"    {{ rank=source; {entries} }}");
+        }
+
         builder.AppendLine();
-        foreach (var edge in model.Edges)
+        foreach (var edge in layout.Edges)
             builder.AppendLine($"    {ids[edge.FromId]} -> {ids[edge.ToId]} [label=\"{Escape(EdgeLabel.For(edge))}\"];");
 
         builder.AppendLine("}");
@@ -68,10 +81,11 @@ public static class DotExporter
             ConceptKind.Command => ("#90CAF9", "#1565C0"),
             ConceptKind.DomainEvent => ("#FFB74D", "#E65100"),
             ConceptKind.Policy => ("#CE93D8", "#6A1B9A"),
+            ConceptKind.Invariant => ("#80CBC4", "#00695C"),
             ConceptKind.ReadModel => ("#A5D6A7", "#2E7D32"),
             ConceptKind.ValueObject => ("#ECEFF1", "#607D8B"),
             ConceptKind.ExternalSystem => ("#F48FB1", "#AD1457"),
-            ConceptKind.Actor => ("#FFF59D", "#F9A825"),
+            ConceptKind.Actor => ("#BCAAA4", "#4E342E"),
             _ => ("#ECEFF1", "#607D8B"),
         };
 

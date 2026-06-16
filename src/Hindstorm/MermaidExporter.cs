@@ -15,14 +15,24 @@ namespace Hindstorm;
 /// </remarks>
 public static class MermaidExporter
 {
-    /// <summary>Renders the model as Mermaid flowchart source.</summary>
-    public static string Export(DomainModel model)
+    /// <summary>Renders the model as Mermaid flowchart source, laid out with the ELK engine.</summary>
+    public static string Export(DomainModel model) => Export(model, MermaidLayout.Elk);
+
+    /// <summary>Renders the model as Mermaid flowchart source using the given layout engine.</summary>
+    public static string Export(DomainModel model, MermaidLayout layout)
     {
-        var (ids, phantoms) = AssignIds(model);
+        // Order nodes and edges from the graph's entry points so the flow reads left to right.
+        var ordered = GraphLayout.Order(model);
+        var (ids, phantoms) = AssignIds(ordered);
         var builder = new StringBuilder();
+
+        // ELK lays cyclic, layered flows out far more cleanly than Mermaid's default (dagre) renderer; it
+        // is the default. The directive must come first. Pass MermaidLayout.Dagre to opt out.
+        if (layout == MermaidLayout.Elk)
+            builder.AppendLine("%%{init: {\"layout\": \"elk\"}}%%");
         builder.AppendLine("flowchart LR");
 
-        foreach (var node in model.Nodes)
+        foreach (var node in ordered.Nodes)
         {
             var label = Escape(node.Name);
             builder.AppendLine($"    {ids[node.Id]}[\"{label}\"]:::{ClassFor(node)}");
@@ -33,10 +43,10 @@ public static class MermaidExporter
         foreach (var id in phantoms)
             builder.AppendLine($"    {ids[id]}[\"{Escape(id)}\"]:::inferred");
 
-        if (model.Edges.Count > 0)
+        if (ordered.Edges.Count > 0)
             builder.AppendLine();
 
-        foreach (var edge in model.Edges)
+        foreach (var edge in ordered.Edges)
             builder.AppendLine($"    {ids[edge.FromId]} -->|{EdgeLabel.For(edge)}| {ids[edge.ToId]}");
 
         builder.AppendLine();
@@ -48,16 +58,16 @@ public static class MermaidExporter
 
     private static string ClassFor(DomainNode node) => node.Inferred ? "inferred" : node.Kind.ToString();
 
-    private static (Dictionary<string, string> Ids, List<string> Phantoms) AssignIds(DomainModel model)
+    private static (Dictionary<string, string> Ids, List<string> Phantoms) AssignIds(GraphLayout.Ordered layout)
     {
         var ids = new Dictionary<string, string>(StringComparer.Ordinal);
         var phantoms = new List<string>();
         var index = 0;
-        foreach (var node in model.Nodes)
+        foreach (var node in layout.Nodes)
             if (!ids.ContainsKey(node.Id))
                 ids[node.Id] = $"n{index++}";
 
-        foreach (var edge in model.Edges)
+        foreach (var edge in layout.Edges)
             foreach (var endpoint in new[] { edge.FromId, edge.ToId })
                 if (!ids.ContainsKey(endpoint))
                 {
@@ -76,10 +86,11 @@ public static class MermaidExporter
         "classDef Command fill:#90CAF9,stroke:#1565C0,color:#000;",
         "classDef DomainEvent fill:#FFB74D,stroke:#E65100,color:#000;",
         "classDef Policy fill:#CE93D8,stroke:#6A1B9A,color:#000;",
+        "classDef Invariant fill:#80CBC4,stroke:#00695C,color:#000;",
         "classDef ReadModel fill:#A5D6A7,stroke:#2E7D32,color:#000;",
         "classDef ValueObject fill:#ECEFF1,stroke:#607D8B,color:#000;",
         "classDef ExternalSystem fill:#F48FB1,stroke:#AD1457,color:#000;",
-        "classDef Actor fill:#FFF59D,stroke:#F9A825,color:#000;",
+        "classDef Actor fill:#BCAAA4,stroke:#4E342E,color:#000;",
         "classDef inferred fill:#FFFFFF,stroke:#9E9E9E,stroke-dasharray:4 3,color:#616161;",
     ];
 }

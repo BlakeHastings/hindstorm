@@ -57,6 +57,14 @@ public sealed class PolicyAttribute : DomainConceptAttribute
     public PolicyAttribute() : base(ConceptKind.Policy) { }
 }
 
+/// <summary>Labels a type as an <see cref="ConceptKind.Invariant"/> (a command-time business rule).</summary>
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
+public sealed class InvariantAttribute : DomainConceptAttribute
+{
+    /// <summary>Labels the type as an invariant.</summary>
+    public InvariantAttribute() : base(ConceptKind.Invariant) { }
+}
+
 /// <summary>Labels a type as a <see cref="ConceptKind.ReadModel"/>.</summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
 public sealed class ReadModelAttribute : DomainConceptAttribute

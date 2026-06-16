@@ -32,13 +32,51 @@ public sealed class ExporterContractTests
     // ---------------------------------------------------------------------
 
     [Fact]
-    public void Mermaid_Output_StartsWith_FlowchartLR()
+    public void Mermaid_DefaultsToElk_And_ContainsFlowchartLR()
     {
         var model = ModelWith(Node("Ns.Skill", "Skill", ConceptKind.Aggregate));
 
         string mermaid = MermaidExporter.Export(model);
 
+        Assert.StartsWith("%%{init:", mermaid.TrimStart());
+        Assert.Contains("\"layout\": \"elk\"", mermaid);
+        Assert.Contains("flowchart LR", mermaid);
+    }
+
+    [Fact]
+    public void Mermaid_DagreOption_OmitsElkDirective_And_StartsWithFlowchart()
+    {
+        var model = ModelWith(Node("Ns.Skill", "Skill", ConceptKind.Aggregate));
+
+        string mermaid = MermaidExporter.Export(model, MermaidLayout.Dagre);
+
         Assert.StartsWith("flowchart LR", mermaid.TrimStart());
+        Assert.DoesNotContain("elk", mermaid);
+    }
+
+    [Fact]
+    public void Mermaid_ColorsActorAndAggregateDistinctly()
+    {
+        var model = new DomainModel(
+            new[]
+            {
+                Node("Ns.Actor", "Actor", ConceptKind.Actor),
+                Node("Ns.Agg", "Agg", ConceptKind.Aggregate),
+            },
+            System.Array.Empty<DomainEdge>());
+
+        string mermaid = MermaidExporter.Export(model);
+
+        Assert.NotEqual(FillOf(mermaid, "Actor"), FillOf(mermaid, "Aggregate"));
+    }
+
+    // Extracts the fill color from a "classDef <kind> fill:#XXXXXX,..." line.
+    private static string FillOf(string mermaid, string kind)
+    {
+        var marker = $"classDef {kind} fill:";
+        var start = mermaid.IndexOf(marker, System.StringComparison.Ordinal) + marker.Length;
+        var end = mermaid.IndexOf(',', start);
+        return mermaid.Substring(start, end - start);
     }
 
     [Fact]
@@ -138,7 +176,7 @@ public sealed class ExporterContractTests
     {
         string mermaid = MermaidExporter.Export(DomainModel.Empty);
 
-        Assert.StartsWith("flowchart LR", mermaid.TrimStart());
+        Assert.Contains("flowchart LR", mermaid);
     }
 
     // ---------------------------------------------------------------------

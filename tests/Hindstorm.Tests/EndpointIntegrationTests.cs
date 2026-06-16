@@ -53,7 +53,21 @@ public class EndpointIntegrationTests
         var body = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.StartsWith("flowchart LR", body);
+        Assert.Contains("flowchart LR", body);
+        Assert.Contains("\"layout\": \"elk\"", body); // ELK by default
+    }
+
+    [Fact]
+    public async Task Mermaid_layout_dagre_opts_out_of_elk()
+    {
+        await using var app = await StartAsync();
+        var client = app.GetTestClient();
+
+        var response = await client.GetAsync("/domain-model?format=mermaid&layout=dagre");
+        var body = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.DoesNotContain("elk", body);
     }
 
     [Fact]

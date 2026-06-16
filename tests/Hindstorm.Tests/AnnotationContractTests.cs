@@ -22,6 +22,7 @@ public class AnnotationContractTests
         { typeof(CommandAttribute), ConceptKind.Command },
         { typeof(DomainEventAttribute), ConceptKind.DomainEvent },
         { typeof(PolicyAttribute), ConceptKind.Policy },
+        { typeof(InvariantAttribute), ConceptKind.Invariant },
         { typeof(ReadModelAttribute), ConceptKind.ReadModel },
         { typeof(ValueObjectAttribute), ConceptKind.ValueObject },
         { typeof(ExternalSystemAttribute), ConceptKind.ExternalSystem },

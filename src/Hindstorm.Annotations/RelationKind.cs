@@ -19,7 +19,7 @@ public enum RelationKind
     /// <summary>The declaring type issues the target command. Edge: declaring -&gt; command.</summary>
     Issues,
 
-    /// <summary>The declaring type consults/enforces the target policy. Edge: declaring -&gt; policy.</summary>
+    /// <summary>The declaring type enforces the target invariant. Edge: declaring -&gt; invariant.</summary>
     Enforces,
 
     /// <summary>The declaring type updates the target read model. Edge: declaring -&gt; read model.</summary>
