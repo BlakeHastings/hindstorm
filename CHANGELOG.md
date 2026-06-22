@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/BlakeHastings/hindstorm/compare/v0.2.0...v0.3.0) (2026-06-22)
+
+
+### Features
+
+* declared bounded contexts with boundary boxes ([#5](https://github.com/BlakeHastings/hindstorm/issues/5)) ([4b3848e](https://github.com/BlakeHastings/hindstorm/commit/4b3848ef2d1ad94a73cec7caa6bb124ad8231d10))
+
 ## [0.2.0](https://github.com/BlakeHastings/hindstorm/compare/v0.1.0...v0.2.0) (2026-06-16)
 
 
