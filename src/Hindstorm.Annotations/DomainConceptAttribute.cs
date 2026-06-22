@@ -31,6 +31,25 @@ public abstract class DomainConceptAttribute : Attribute
     /// that. The context is a declared strategic boundary, never inferred from project structure on its own.
     /// </summary>
     public string? Context { get; set; }
+
+    /// <summary>
+    /// The dataflow pipeline this concept belongs to, named explicitly (for example <c>"AudioIngest"</c>),
+    /// for streaming-plane concepts such as a <see cref="ConceptKind.Processor"/> or a
+    /// <see cref="ConceptKind.DataEvent"/>. Exporters draw the pipeline as its own lane, visually distinct
+    /// from a bounded context. Parallel to <see cref="Context"/> and, like it, a declared grouping never
+    /// inferred from project structure on its own. Left null, a scanner can derive one from the namespace
+    /// via <c>ScannerOptions.PipelineFromNamespace</c>; an explicit value set here wins over that.
+    /// </summary>
+    public string? Pipeline { get; set; }
+
+    /// <summary>
+    /// The level of this concept in a Complex Event Processing abstraction hierarchy, where 0 (the default)
+    /// is the rawest stream and a higher number is more meaningful (frame 0 -&gt; segment 1 -&gt; utterance 2
+    /// -&gt; intent 3). Meaningful mainly on a <see cref="ConceptKind.DataEvent"/> or a
+    /// <see cref="ConceptKind.DomainEvent"/> lifted out of a stream; it lets an exporter order the dataflow
+    /// plane by abstraction. Left at 0 it has no effect, so transactional concepts can ignore it.
+    /// </summary>
+    public int AbstractionLevel { get; set; }
 }
 
 /// <summary>Labels a type as an <see cref="ConceptKind.Aggregate"/>.</summary>
@@ -103,4 +122,20 @@ public sealed class ActorAttribute : DomainConceptAttribute
 {
     /// <summary>Labels the type as an actor.</summary>
     public ActorAttribute() : base(ConceptKind.Actor) { }
+}
+
+/// <summary>Labels a type as a <see cref="ConceptKind.Processor"/> (a dataflow transform stage).</summary>
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
+public sealed class ProcessorAttribute : DomainConceptAttribute
+{
+    /// <summary>Labels the type as a dataflow processor.</summary>
+    public ProcessorAttribute() : base(ConceptKind.Processor) { }
+}
+
+/// <summary>Labels a type as a <see cref="ConceptKind.DataEvent"/> (a measurement or data point).</summary>
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
+public sealed class DataEventAttribute : DomainConceptAttribute
+{
+    /// <summary>Labels the type as a data event.</summary>
+    public DataEventAttribute() : base(ConceptKind.DataEvent) { }
 }

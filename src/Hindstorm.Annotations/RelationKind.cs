@@ -24,6 +24,26 @@ public enum RelationKind
 
     /// <summary>The declaring type updates the target read model. Edge: declaring -&gt; read model.</summary>
     Updates,
+
+    /// <summary>
+    /// The declaring processor transforms the stream into the target representation. Edge: declaring
+    /// -&gt; data event. A dataflow-plane edge: producing the next representation, not raising a fact.
+    /// </summary>
+    Transforms,
+
+    /// <summary>
+    /// The declaring processor feeds the next stage of the pipeline. Edge: declaring -&gt; processor. The
+    /// dataflow "next step" edge, deliberately not a command: it carries the stream onward, it issues
+    /// no intent and cannot be rejected.
+    /// </summary>
+    Feeds,
+
+    /// <summary>
+    /// The declaring processor translates the stream into a genuine domain event at the seam between the
+    /// dataflow plane and the transactional domain. Edge: declaring -&gt; domain event. This is the
+    /// anti-corruption / score-to-event boundary, where a measurement becomes a domain-significant fact.
+    /// </summary>
+    Translates,
 }
 
 /// <summary>Which end of a relation the annotated (declaring) type sits on.</summary>

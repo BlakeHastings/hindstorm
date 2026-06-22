@@ -37,4 +37,22 @@ public enum ConceptKind
     /// does not issue a command.
     /// </summary>
     Invariant,
+
+    /// <summary>
+    /// A dataflow transform stage on the streaming plane (a filter, a processor, a Complex Event Processing
+    /// agent). It transforms one representation of a stream into another and holds no invariant, makes no
+    /// decision, and cannot reject. Distinct from an <see cref="Aggregate"/>: "do the next step" is a
+    /// pipeline edge, not a command, so a processor is not a consistency boundary. A stateful processor is
+    /// a domain service, never an aggregate.
+    /// </summary>
+    Processor,
+
+    /// <summary>
+    /// A measurement or low-abstraction data point on the streaming plane (a frame, a probability, a score),
+    /// as opposed to a meaningful <see cref="DomainEvent"/>. A data event is the raw material a
+    /// <see cref="Processor"/> consumes and produces; only a domain-significant fact lifted out of the
+    /// stream crosses the translation seam to become a domain event. Use <see cref="DomainConceptAttribute.AbstractionLevel"/>
+    /// to place it in a Complex Event Processing hierarchy (frame -&gt; segment -&gt; utterance -&gt; intent).
+    /// </summary>
+    DataEvent,
 }

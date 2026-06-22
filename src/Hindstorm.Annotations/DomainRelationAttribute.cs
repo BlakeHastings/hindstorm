@@ -82,3 +82,27 @@ public sealed class UpdatesAttribute : DomainRelationAttribute
     /// <param name="readModelType">The read model updated.</param>
     public UpdatesAttribute(Type readModelType) : base(RelationKind.Updates, RelationDirection.FromDeclaring, readModelType) { }
 }
+
+/// <summary>Declares that the annotated processor or method transforms the stream into a data event.</summary>
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Method, AllowMultiple = true, Inherited = false)]
+public sealed class TransformsAttribute : DomainRelationAttribute
+{
+    /// <param name="dataEventType">The output representation the stream is transformed into.</param>
+    public TransformsAttribute(Type dataEventType) : base(RelationKind.Transforms, RelationDirection.FromDeclaring, dataEventType) { }
+}
+
+/// <summary>Declares that the annotated processor or method feeds the next stage of the pipeline.</summary>
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Method, AllowMultiple = true, Inherited = false)]
+public sealed class FeedsAttribute : DomainRelationAttribute
+{
+    /// <param name="stageType">The downstream processor the stream is fed to.</param>
+    public FeedsAttribute(Type stageType) : base(RelationKind.Feeds, RelationDirection.FromDeclaring, stageType) { }
+}
+
+/// <summary>Declares that the annotated processor or method translates the stream into a domain event at the seam.</summary>
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Method, AllowMultiple = true, Inherited = false)]
+public sealed class TranslatesAttribute : DomainRelationAttribute
+{
+    /// <param name="domainEventType">The domain event the stream is translated into at the anti-corruption seam.</param>
+    public TranslatesAttribute(Type domainEventType) : base(RelationKind.Translates, RelationDirection.FromDeclaring, domainEventType) { }
+}
