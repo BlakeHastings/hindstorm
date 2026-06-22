@@ -87,7 +87,9 @@ public sealed class RefinementPolicy
 
 `[Policy]` is a *reactive* rule ("whenever this event, issue that command"); `[Invariant]` is a command-time business rule an aggregate enforces before raising an event. They are different concepts and kept distinct, in line with Event Storming.
 
-Every concept attribute also takes optional `Name`, `Description`, and `Context` (see [Bounded contexts](#bounded-contexts)) properties.
+A streaming pipeline lives on a second plane with its own two concepts: `[Processor]` (a dataflow transform stage; see [Streaming pipelines](#streaming-pipelines)) and `[DataEvent]` (a measurement, distinct from a domain event).
+
+Every concept attribute also takes optional `Name`, `Description`, and `Context` (see [Bounded contexts](#bounded-contexts)) properties. Streaming concepts additionally take `Pipeline` (a declared dataflow grouping, parallel to `Context`) and `AbstractionLevel` (a Complex Event Processing rank, 0 for the rawest stream).
 
 ### Relation (edge) attributes
 
@@ -99,8 +101,11 @@ Every concept attribute also takes optional `Name`, `Description`, and `Context`
 | `[Issues(typeof(C))]` | declaring → command |
 | `[Enforces(typeof(I))]` | declaring → invariant |
 | `[Updates(typeof(R))]` | declaring → read model |
+| `[Transforms(typeof(D))]` | declaring processor → data event |
+| `[Feeds(typeof(P))]` | declaring processor → next processor |
+| `[Translates(typeof(E))]` | declaring processor → domain event (the seam) |
 
-Relation attributes go on either the type or the specific method that owns the relationship; method placement records the member name on the edge.
+Relation attributes go on either the type or the specific method that owns the relationship; method placement records the member name on the edge. They are valid on a class, struct, or method, but not an interface; to state an edge from an interface-typed concept, put the relation on the method that performs it.
 
 ## Recover and export the model
 
@@ -145,6 +150,30 @@ var model = DomainModelScanner.Scan(assembly, options =>
 
 Concepts with no context (declared or derived) sit outside any box, and when nothing declares a context no boundaries are drawn at all.
 
+## Streaming pipelines
+
+The command / aggregate / event / policy grammar is built for **transactional** domains, where an actor issues intent, an aggregate guards invariants, and a decision can succeed or be **rejected**. A real-time **dataflow** pipeline (sensor → VAD → endpointer → speech-to-text → relevance decision) is a different plane: it continuously **transforms** immutable records that already happened and **cannot reject** anything. Forcing it into aggregate/command/policy stickies over-models it. Hindstorm gives that second plane its own small vocabulary, joined to the domain at a named seam.
+
+- `[Processor]` is a dataflow transform stage (a filter, a Complex Event Processing agent). It transforms one representation of the stream into the next; it holds no invariant, makes no decision, and is not an aggregate.
+- `[DataEvent]` is a measurement or low-abstraction data point (a frame, a probability, a score), as opposed to a domain-significant `[DomainEvent]`. Its `AbstractionLevel` places it in a CEP hierarchy (frame 0 → segment 1 → utterance 2 → intent 3) so the pipeline reads from raw to meaningful.
+- `[Transforms]`, `[Feeds]`, and `[Translates]` are the dataflow edges. `Transforms` produces the next data representation; `Feeds` hands the stream to the next stage ("do the next step" is a pipeline edge, not a command); `[Translates]` is the **anti-corruption seam** where a measurement becomes a genuine domain event the transactional domain reacts to. The exporters highlight that seam edge.
+- A `Pipeline` groups the stages into one declared lane, the dataflow counterpart of a bounded `Context`. The exporters draw the pipeline as its own lane, styled apart from a domain box, so the two planes never mash into one flat graph. Derive it from the namespace with `options.PipelineFromNamespace` if you prefer, exactly as with `ContextFromNamespace`.
+
+```csharp
+[Processor(Pipeline = "AudioIngest")]
+public sealed class SpeechToText
+{
+    [Transforms(typeof(Transcript))]              // processor -> data event
+    [Translates(typeof(UtteranceTranscribed))]    // the seam: measurement -> domain event
+    public Transcript Transcribe(SpeechSegment segment) { /* ... */ }
+}
+
+[DataEvent(Pipeline = "AudioIngest", AbstractionLevel = 1)]
+public sealed record SpeechSegment(byte[] Pcm);
+```
+
+The `Streaming` namespace in [the sample](samples/Hindstorm.Sample/Streaming) models the whole audio pipeline this way, scanned as its own model. The grounding for the second plane is Complex Event Processing and the event abstraction hierarchy (Luckham), domain event versus measurement, Event Modeling's Automation and Translation patterns (Dymitruk), and the Anti-Corruption Layer (Evans); see the `event-storming-modeling` skill for the full rationale.
+
 ## What it captures, and what it can't
 
 Hindstorm recovers the *behavioral* model from code: the concepts and the flow between them. That is most of an Event Storming wall, but a wall built in a workshop carries narrative and spatial meaning that code does not, so a recovered model is a **topological graph, not a timeline**. The exporters anchor entry points (actors, initiating systems) on the left and lay the flow out rightward, but horizontal position reflects reachability, not chronology. The model deliberately does not invent:
@@ -185,7 +214,7 @@ carrier, email provider), invariants, read models, and a handler-interface proje
 dotnet run --project samples/Hindstorm.Sample
 ```
 
-Paste the Mermaid into <https://mermaid.live> to see the wall.
+It then scans a second, separate model from the `Streaming` namespace: a real-time audio pipeline on the dataflow plane (microphone → VAD → endpointer → speech-to-text) that translates into a small Conversation context at the seam, so you can see the two planes rendered distinctly. Paste either Mermaid block into <https://mermaid.live> to see the wall.
 
 ## Contributing
 
