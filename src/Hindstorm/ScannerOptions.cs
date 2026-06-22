@@ -34,4 +34,13 @@ public sealed class ScannerOptions
 
     /// <summary>An optional filter to limit which types are scanned, for example by namespace.</summary>
     public Func<Type, bool>? TypeFilter { get; set; }
+
+    /// <summary>
+    /// An optional rule that derives a node's bounded context from its namespace, applied only when the
+    /// concept did not declare a <c>Context</c> of its own (an explicit context always wins). The argument
+    /// is the type's namespace (which may be null); return the context name, or null for none. "Use the
+    /// namespace as-is" is <c>ns =&gt; ns</c>; a segment is <c>ns =&gt; ns?.Split('.').Last()</c>. Left
+    /// unset, context is taken only from explicit attributes, so namespace is never used unless you opt in.
+    /// </summary>
+    public Func<string?, string?>? ContextFromNamespace { get; set; }
 }

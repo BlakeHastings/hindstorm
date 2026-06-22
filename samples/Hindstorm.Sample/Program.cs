@@ -9,15 +9,20 @@ var model = DomainModelScanner.Scan(typeof(Order).Assembly, options =>
     // like InventoryLevelsProjection show up without being annotated.
     options.HandlerInterface = typeof(IDomainEventHandler<>);
     options.DefaultHandlerKind = ConceptKind.ReadModel;
+
+    // Derive each concept's bounded context from the last namespace segment (Ordering, Payments, ...).
+    // None of the sample types set an explicit Context, so this rule supplies them all; an explicit
+    // [Aggregate(Context = "...")] would win over it.
+    options.ContextFromNamespace = ns => ns?.Split('.').Last();
 });
 
 Console.WriteLine($"Recovered {model.Nodes.Count} concepts and {model.Edges.Count} relationships.");
 Console.WriteLine();
 
-// Group by namespace to show the bounded contexts the concepts fall into.
-Console.WriteLine("Bounded contexts (by namespace):");
-foreach (var context in model.Nodes.GroupBy(n => n.Namespace).OrderBy(g => g.Key, StringComparer.Ordinal))
-    Console.WriteLine($"  {context.Key} — {context.Count()} concepts");
+// Group by the declared bounded context.
+Console.WriteLine("Bounded contexts:");
+foreach (var context in model.Nodes.GroupBy(n => n.Context).OrderBy(g => g.Key, StringComparer.Ordinal))
+    Console.WriteLine($"  {context.Key ?? "(none)"} — {context.Count()} concepts");
 Console.WriteLine();
 
 Console.WriteLine("# Mermaid (paste into https://mermaid.live)");

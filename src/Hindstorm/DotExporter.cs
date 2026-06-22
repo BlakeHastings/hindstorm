@@ -45,20 +45,40 @@ public static class DotExporter
         builder.AppendLine("    node [shape=box, style=\"filled,rounded\", fontname=\"sans-serif\"];");
         builder.AppendLine();
 
-        foreach (var node in layout.Nodes)
+        // When contexts are declared, draw each as a labelled cluster (a boundary box); uncontexted nodes
+        // sit at the top level. Cross-context edges then visibly cross a boundary.
+        var grouping = GraphLayout.GroupByContext(layout.Nodes);
+        if (grouping.AnyContext)
         {
-            var (fill, stroke) = Palette(node);
-            var style = node.Inferred ? "\"filled,rounded,dashed\"" : "\"filled,rounded\"";
-            builder.AppendLine(
-                $"    {ids[node.Id]} [label=\"{Escape(node.Name)}\", fillcolor=\"{fill}\", color=\"{stroke}\", style={style}];");
+            var contextIndex = 0;
+            foreach (var (context, contextNodes) in grouping.Groups)
+            {
+                builder.AppendLine($"    subgraph cluster_{contextIndex++} {{");
+                builder.AppendLine($"        label=\"{Escape(context)}\";");
+                builder.AppendLine("        style=\"rounded,dashed\";");
+                builder.AppendLine("        color=\"#9E9E9E\";");
+                builder.AppendLine("        fontname=\"sans-serif\";");
+                foreach (var node in contextNodes)
+                    AppendNode(builder, ids, node, "        ");
+                builder.AppendLine("    }");
+            }
+
+            foreach (var node in grouping.Ungrouped)
+                AppendNode(builder, ids, node, "    ");
+        }
+        else
+        {
+            foreach (var node in layout.Nodes)
+                AppendNode(builder, ids, node, "    ");
         }
 
         foreach (var id in phantoms)
             builder.AppendLine(
                 $"    {ids[id]} [label=\"{Escape(id)}\", fillcolor=\"#FFFFFF\", color=\"#9E9E9E\", style=\"filled,rounded,dashed\"];");
 
-        // Pin entry points (nodes with no incoming edge) to the leftmost rank, so the flow starts there.
-        if (layout.EntryIds.Count > 0)
+        // Pin entry points to the leftmost rank, so the flow starts there. Skipped when clustering, since a
+        // cross-cluster rank constraint fights Graphviz's cluster layout.
+        if (layout.EntryIds.Count > 0 && !grouping.AnyContext)
         {
             var entries = string.Join(" ", layout.EntryIds.Select(id => ids[id] + ";"));
             builder.AppendLine();
@@ -71,6 +91,14 @@ public static class DotExporter
 
         builder.AppendLine("}");
         return builder.ToString();
+    }
+
+    private static void AppendNode(StringBuilder builder, Dictionary<string, string> ids, DomainNode node, string indent)
+    {
+        var (fill, stroke) = Palette(node);
+        var style = node.Inferred ? "\"filled,rounded,dashed\"" : "\"filled,rounded\"";
+        builder.AppendLine(
+            $"{indent}{ids[node.Id]} [label=\"{Escape(node.Name)}\", fillcolor=\"{fill}\", color=\"{stroke}\", style={style}];");
     }
 
     private static (string Fill, string Stroke) Palette(DomainNode node) => node.Inferred

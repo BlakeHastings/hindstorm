@@ -23,6 +23,14 @@ public abstract class DomainConceptAttribute : Attribute
 
     /// <summary>An optional one-line description shown alongside the node.</summary>
     public string? Description { get; set; }
+
+    /// <summary>
+    /// The bounded context this concept belongs to, named explicitly (for example <c>"Payments"</c>).
+    /// Exporters draw a labelled boundary around each context. Left null, a scanner can derive one from
+    /// the namespace via <c>ScannerOptions.ContextFromNamespace</c>; an explicit value set here wins over
+    /// that. The context is a declared strategic boundary, never inferred from project structure on its own.
+    /// </summary>
+    public string? Context { get; set; }
 }
 
 /// <summary>Labels a type as an <see cref="ConceptKind.Aggregate"/>.</summary>

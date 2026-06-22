@@ -87,6 +87,8 @@ public sealed class RefinementPolicy
 
 `[Policy]` is a *reactive* rule ("whenever this event, issue that command"); `[Invariant]` is a command-time business rule an aggregate enforces before raising an event. They are different concepts and kept distinct, in line with Event Storming.
 
+Every concept attribute also takes optional `Name`, `Description`, and `Context` (see [Bounded contexts](#bounded-contexts)) properties.
+
 ### Relation (edge) attributes
 
 | Attribute | Edge it draws |
@@ -120,6 +122,28 @@ string json    = JsonExporter.Export(model);
 Mermaid output uses the **ELK layout engine by default** (emitted as a `%%{init: {"layout": "elk"}}%%` directive), which lays cyclic, layered flows out far more cleanly than Mermaid's built-in renderer. Opt out with `MermaidExporter.Export(model, MermaidLayout.Dagre)`, or `?layout=dagre` on the endpoint.
 
 Untagged types referenced by a relation still appear, as **dashed inferred nodes**, so a forgotten label shows up on the diagram instead of vanishing. Turn that off with `options.InferUntaggedEndpoints = false`.
+
+## Bounded contexts
+
+Concepts can declare the bounded context they belong to, and the exporters draw a labelled boundary around each one, so the wall reads as contexts rather than one flat web. Edges that leave one box and enter another are your integration points.
+
+A context is **declared**, never guessed from project structure. Set it explicitly per concept:
+
+```csharp
+[Aggregate(Context = "Payments")]
+public sealed class Payment { /* ... */ }
+```
+
+Or, to avoid repeating the string, derive it from the namespace by passing a rule once. The rule is yours, so the library never hard-codes a namespace convention; an explicit `Context` on a concept always wins over it:
+
+```csharp
+var model = DomainModelScanner.Scan(assembly, options =>
+{
+    options.ContextFromNamespace = ns => ns?.Split('.').Last(); // "MyApp.Payments" -> "Payments"
+});
+```
+
+Concepts with no context (declared or derived) sit outside any box, and when nothing declares a context no boundaries are drawn at all.
 
 ## What it captures, and what it can't
 
