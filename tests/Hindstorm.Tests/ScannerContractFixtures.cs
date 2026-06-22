@@ -176,4 +176,53 @@ namespace Hindstorm.Tests.ScannerContract.Fixtures
         [Raises(typeof(SampleEvent))]
         public void Fire() { }
     }
+
+    // ------------------------------------------------------------------
+    // Dataflow plane (streaming) fixtures: processors, data events, and the
+    // Transforms / Feeds / Translates edges.
+    // ------------------------------------------------------------------
+
+    [Processor]
+    public class SampleProcessor { }
+
+    [DataEvent]
+    public class SampleDataEvent { }
+
+    // Transforms: declaring processor -> data event (FromDeclaring).
+    [Processor]
+    public class TransformingProcessor
+    {
+        [Transforms(typeof(SampleDataEvent))]
+        public void Run() { }
+    }
+
+    // Feeds: declaring processor -> downstream processor (FromDeclaring).
+    [Processor]
+    public class FeedingProcessor
+    {
+        [Feeds(typeof(SampleProcessor))]
+        public void Hand() { }
+    }
+
+    // Translates: declaring processor -> domain event at the seam (FromDeclaring).
+    [Processor]
+    public class TranslatingProcessor
+    {
+        [Translates(typeof(SampleEvent))]
+        public void Lift() { }
+    }
+
+    // Untagged Transforms target: inferred as a DataEvent.
+    [Processor]
+    public class TransformerToUntagged
+    {
+        [Transforms(typeof(UntaggedDataTarget))]
+        public void Emit() { }
+    }
+
+    public class UntaggedDataTarget { }
+
+    // A data event carrying a pipeline and an abstraction level, for the scanner carry-through tests.
+    [DataEvent(Pipeline = "AudioIngest", AbstractionLevel = 2)]
+    public class PipelinedDataEvent { }
 }

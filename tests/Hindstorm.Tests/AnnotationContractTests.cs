@@ -27,6 +27,8 @@ public class AnnotationContractTests
         { typeof(ValueObjectAttribute), ConceptKind.ValueObject },
         { typeof(ExternalSystemAttribute), ConceptKind.ExternalSystem },
         { typeof(ActorAttribute), ConceptKind.Actor },
+        { typeof(ProcessorAttribute), ConceptKind.Processor },
+        { typeof(DataEventAttribute), ConceptKind.DataEvent },
     };
 
     [Theory]
@@ -69,6 +71,24 @@ public class AnnotationContractTests
         Assert.Equal("An order aggregate.", attr.Description);
     }
 
+    [Fact]
+    public void ConceptAttribute_PipelineAndAbstractionLevel_DefaultToNullAndZero()
+    {
+        var attr = new DataEventAttribute();
+
+        Assert.Null(attr.Pipeline);
+        Assert.Equal(0, attr.AbstractionLevel);
+    }
+
+    [Fact]
+    public void ConceptAttribute_PipelineAndAbstractionLevel_RoundTripViaInitializer()
+    {
+        var attr = new DataEventAttribute { Pipeline = "AudioIngest", AbstractionLevel = 2 };
+
+        Assert.Equal("AudioIngest", attr.Pipeline);
+        Assert.Equal(2, attr.AbstractionLevel);
+    }
+
     // ----------------------------------------------------------------------------------------
     // POSITIVE: relation attributes report Kind + Direction and store the Target.
     // ----------------------------------------------------------------------------------------
@@ -81,6 +101,9 @@ public class AnnotationContractTests
         { typeof(IssuesAttribute), RelationKind.Issues, RelationDirection.FromDeclaring },
         { typeof(EnforcesAttribute), RelationKind.Enforces, RelationDirection.FromDeclaring },
         { typeof(UpdatesAttribute), RelationKind.Updates, RelationDirection.FromDeclaring },
+        { typeof(TransformsAttribute), RelationKind.Transforms, RelationDirection.FromDeclaring },
+        { typeof(FeedsAttribute), RelationKind.Feeds, RelationDirection.FromDeclaring },
+        { typeof(TranslatesAttribute), RelationKind.Translates, RelationDirection.FromDeclaring },
     };
 
     [Theory]

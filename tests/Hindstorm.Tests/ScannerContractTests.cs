@@ -591,5 +591,90 @@ namespace Hindstorm.Tests
             Assert.Empty(DomainModel.Empty.Nodes);
             Assert.Empty(DomainModel.Empty.Edges);
         }
+
+        // ---------------------------------------------------------------------
+        // POSITIVE: dataflow-plane concepts and edges.
+        // ---------------------------------------------------------------------
+
+        [Fact]
+        public void Processor_and_data_event_concepts_produce_nodes_with_their_kinds()
+        {
+            var processor = ScanOnly(typeof(ScannerContract.Fixtures.SampleProcessor));
+            Assert.Equal(ConceptKind.Processor, Assert.Single(processor.Nodes).Kind);
+
+            var dataEvent = ScanOnly(typeof(ScannerContract.Fixtures.SampleDataEvent));
+            Assert.Equal(ConceptKind.DataEvent, Assert.Single(dataEvent.Nodes).Kind);
+        }
+
+        [Fact]
+        public void Transforms_on_method_orients_processor_to_data_event()
+        {
+            var model = ScanOnly(
+                typeof(ScannerContract.Fixtures.TransformingProcessor),
+                typeof(ScannerContract.Fixtures.SampleDataEvent));
+
+            var edge = Assert.Single(model.Edges, e => e.Relation == RelationKind.Transforms);
+            Assert.Equal(typeof(ScannerContract.Fixtures.TransformingProcessor).FullName, edge.FromId);
+            Assert.Equal(typeof(ScannerContract.Fixtures.SampleDataEvent).FullName, edge.ToId);
+        }
+
+        [Fact]
+        public void Feeds_on_method_orients_processor_to_downstream_processor()
+        {
+            var model = ScanOnly(
+                typeof(ScannerContract.Fixtures.FeedingProcessor),
+                typeof(ScannerContract.Fixtures.SampleProcessor));
+
+            var edge = Assert.Single(model.Edges, e => e.Relation == RelationKind.Feeds);
+            Assert.Equal(typeof(ScannerContract.Fixtures.FeedingProcessor).FullName, edge.FromId);
+            Assert.Equal(typeof(ScannerContract.Fixtures.SampleProcessor).FullName, edge.ToId);
+        }
+
+        [Fact]
+        public void Translates_on_method_orients_processor_to_domain_event_at_the_seam()
+        {
+            var model = ScanOnly(
+                typeof(ScannerContract.Fixtures.TranslatingProcessor),
+                typeof(ScannerContract.Fixtures.SampleEvent));
+
+            var edge = Assert.Single(model.Edges, e => e.Relation == RelationKind.Translates);
+            Assert.Equal(typeof(ScannerContract.Fixtures.TranslatingProcessor).FullName, edge.FromId);
+            Assert.Equal(typeof(ScannerContract.Fixtures.SampleEvent).FullName, edge.ToId);
+        }
+
+        [Fact]
+        public void Untagged_transforms_target_is_inferred_as_a_data_event()
+        {
+            var model = ScanOnly(
+                typeof(ScannerContract.Fixtures.TransformerToUntagged),
+                typeof(ScannerContract.Fixtures.UntaggedDataTarget));
+
+            var node = NodeFor(model, typeof(ScannerContract.Fixtures.UntaggedDataTarget));
+            Assert.True(node.Inferred);
+            Assert.Equal(ConceptKind.DataEvent, node.Kind);
+        }
+
+        [Fact]
+        public void Pipeline_and_abstraction_level_are_carried_onto_the_node()
+        {
+            var model = ScanOnly(typeof(ScannerContract.Fixtures.PipelinedDataEvent));
+
+            var node = Assert.Single(model.Nodes);
+            Assert.Equal("AudioIngest", node.Pipeline);
+            Assert.Equal(2, node.AbstractionLevel);
+        }
+
+        [Fact]
+        public void PipelineFromNamespace_fills_pipeline_only_when_not_declared_explicitly()
+        {
+            var model = ScanOnly(
+                o => o.PipelineFromNamespace = _ => "FromNamespace",
+                typeof(ScannerContract.Fixtures.SampleProcessor),
+                typeof(ScannerContract.Fixtures.PipelinedDataEvent));
+
+            // The explicit attribute wins; the rule fills in the processor that declared none.
+            Assert.Equal("FromNamespace", NodeFor(model, typeof(ScannerContract.Fixtures.SampleProcessor)).Pipeline);
+            Assert.Equal("AudioIngest", NodeFor(model, typeof(ScannerContract.Fixtures.PipelinedDataEvent)).Pipeline);
+        }
     }
 }
