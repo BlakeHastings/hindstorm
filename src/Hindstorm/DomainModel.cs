@@ -19,6 +19,15 @@ namespace Hindstorm;
 /// attribute's <c>Context</c> or, failing that, <c>ScannerOptions.ContextFromNamespace</c>. Used to draw
 /// boundary boxes that group the wall by context.
 /// </param>
+/// <param name="Pipeline">
+/// The dataflow pipeline this concept belongs to, or null when none was declared. Comes from the concept
+/// attribute's <c>Pipeline</c> or, failing that, <c>ScannerOptions.PipelineFromNamespace</c>. Used to draw
+/// the streaming plane as its own lane, distinct from a bounded context.
+/// </param>
+/// <param name="AbstractionLevel">
+/// The concept's level in a Complex Event Processing abstraction hierarchy (0 is the rawest stream). Comes
+/// from the concept attribute's <c>AbstractionLevel</c>; 0 for any concept that does not set one.
+/// </param>
 public sealed record DomainNode(
     string Id,
     string Name,
@@ -26,7 +35,9 @@ public sealed record DomainNode(
     string? Namespace,
     string? Description,
     bool Inferred = false,
-    string? Context = null);
+    string? Context = null,
+    string? Pipeline = null,
+    int AbstractionLevel = 0);
 
 /// <summary>
 /// A directed edge in the recovered model: one relationship between two concepts, already oriented in

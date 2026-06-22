@@ -43,4 +43,13 @@ public sealed class ScannerOptions
     /// unset, context is taken only from explicit attributes, so namespace is never used unless you opt in.
     /// </summary>
     public Func<string?, string?>? ContextFromNamespace { get; set; }
+
+    /// <summary>
+    /// An optional rule that derives a streaming-plane concept's dataflow pipeline from its namespace, the
+    /// dataflow counterpart of <see cref="ContextFromNamespace"/>. Applied only when the concept did not
+    /// declare a <c>Pipeline</c> of its own (an explicit pipeline always wins). The argument is the type's
+    /// namespace (which may be null); return the pipeline name, or null for none. Left unset, a pipeline is
+    /// taken only from explicit attributes.
+    /// </summary>
+    public Func<string?, string?>? PipelineFromNamespace { get; set; }
 }

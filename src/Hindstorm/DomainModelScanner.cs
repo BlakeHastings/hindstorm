@@ -147,13 +147,16 @@ public static class DomainModelScanner
 
         nodes[id] = new DomainNode(
             id, type.Name, inferredKind, type.Namespace, Description: null, Inferred: true,
-            Context: options.ContextFromNamespace?.Invoke(type.Namespace));
+            Context: options.ContextFromNamespace?.Invoke(type.Namespace),
+            Pipeline: options.PipelineFromNamespace?.Invoke(type.Namespace));
     }
 
     private static DomainNode NodeFor(Type type, DomainConceptAttribute concept, ScannerOptions options)
         => new(
             IdOf(type), concept.Name ?? type.Name, concept.Kind, type.Namespace, concept.Description,
-            Context: concept.Context ?? options.ContextFromNamespace?.Invoke(type.Namespace));
+            Context: concept.Context ?? options.ContextFromNamespace?.Invoke(type.Namespace),
+            Pipeline: concept.Pipeline ?? options.PipelineFromNamespace?.Invoke(type.Namespace),
+            AbstractionLevel: concept.AbstractionLevel);
 
     private static ConceptKind InferredKindFor(RelationKind relation) => relation switch
     {
@@ -163,6 +166,9 @@ public static class DomainModelScanner
         RelationKind.Issues => ConceptKind.Command,
         RelationKind.Enforces => ConceptKind.Invariant,
         RelationKind.Updates => ConceptKind.ReadModel,
+        RelationKind.Transforms => ConceptKind.DataEvent,
+        RelationKind.Feeds => ConceptKind.Processor,
+        RelationKind.Translates => ConceptKind.DomainEvent,
         _ => ConceptKind.ValueObject,
     };
 
