@@ -50,15 +50,28 @@ public static class DotExporter
         var grouping = GraphLayout.GroupByContext(layout.Nodes);
         if (grouping.AnyContext)
         {
-            var contextIndex = 0;
-            foreach (var (context, contextNodes) in grouping.Groups)
+            var clusterIndex = 0;
+            foreach (var group in grouping.Groups)
             {
-                builder.AppendLine($"    subgraph cluster_{contextIndex++} {{");
-                builder.AppendLine($"        label=\"{Escape(context)}\";");
-                builder.AppendLine("        style=\"rounded,dashed\";");
-                builder.AppendLine("        color=\"#9E9E9E\";");
+                builder.AppendLine($"    subgraph cluster_{clusterIndex++} {{");
+                if (group.Plane == GraphLayout.Plane.Pipeline)
+                {
+                    // A pipeline lane reads as the streaming plane: a filled blue-grey band, not the grey
+                    // dashed bounded-context box.
+                    builder.AppendLine($"        label=\"pipeline: {Escape(group.Label)}\";");
+                    builder.AppendLine("        style=\"rounded,filled\";");
+                    builder.AppendLine("        color=\"#455A64\";");
+                    builder.AppendLine("        fillcolor=\"#ECEFF1\";");
+                }
+                else
+                {
+                    builder.AppendLine($"        label=\"{Escape(group.Label)}\";");
+                    builder.AppendLine("        style=\"rounded,dashed\";");
+                    builder.AppendLine("        color=\"#9E9E9E\";");
+                }
+
                 builder.AppendLine("        fontname=\"sans-serif\";");
-                foreach (var node in contextNodes)
+                foreach (var node in group.Nodes)
                     AppendNode(builder, ids, node, "        ");
                 builder.AppendLine("    }");
             }
@@ -87,7 +100,14 @@ public static class DotExporter
 
         builder.AppendLine();
         foreach (var edge in layout.Edges)
-            builder.AppendLine($"    {ids[edge.FromId]} -> {ids[edge.ToId]} [label=\"{Escape(EdgeLabel.For(edge))}\"];");
+        {
+            // The translation seam (a Translates edge) joins the dataflow plane to the domain plane, so
+            // draw it as a highlighted boundary rather than a plain edge.
+            var attrs = edge.Relation == RelationKind.Translates
+                ? $"label=\"{Escape(EdgeLabel.For(edge))}\", color=\"#AD1457\", penwidth=2"
+                : $"label=\"{Escape(EdgeLabel.For(edge))}\"";
+            builder.AppendLine($"    {ids[edge.FromId]} -> {ids[edge.ToId]} [{attrs}];");
+        }
 
         builder.AppendLine("}");
         return builder.ToString();
@@ -114,6 +134,8 @@ public static class DotExporter
             ConceptKind.ValueObject => ("#ECEFF1", "#607D8B"),
             ConceptKind.ExternalSystem => ("#F48FB1", "#AD1457"),
             ConceptKind.Actor => ("#BCAAA4", "#4E342E"),
+            ConceptKind.Processor => ("#B0BEC5", "#37474F"),
+            ConceptKind.DataEvent => ("#CFD8DC", "#546E7A"),
             _ => ("#ECEFF1", "#607D8B"),
         };
 

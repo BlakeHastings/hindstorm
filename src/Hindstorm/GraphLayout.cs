@@ -92,46 +92,76 @@ internal static class GraphLayout
         return new Ordered(orderedNodes, orderedEdges, entryIds);
     }
 
+    /// <summary>Which plane a group of nodes sits on: the transactional domain or the streaming dataflow.</summary>
+    internal enum Plane
+    {
+        /// <summary>A bounded context on the transactional domain plane.</summary>
+        Context,
+
+        /// <summary>A dataflow pipeline on the streaming plane.</summary>
+        Pipeline,
+    }
+
+    internal readonly record struct Group(string Label, Plane Plane, IReadOnlyList<DomainNode> Nodes);
+
     internal readonly record struct Grouping(
-        IReadOnlyList<(string Context, IReadOnlyList<DomainNode> Nodes)> Groups,
+        IReadOnlyList<Group> Groups,
         IReadOnlyList<DomainNode> Ungrouped,
-        bool AnyContext);
+        bool AnyGroup)
+    {
+        /// <summary>True when at least one group is drawn (a context or a pipeline boundary).</summary>
+        public bool AnyContext => AnyGroup;
+    }
 
     /// <summary>
-    /// Buckets nodes by their declared bounded context, preserving the given order within each bucket and
-    /// ordering the buckets by first appearance. Nodes with no context are returned separately. When no
-    /// node declares a context, <see cref="Grouping.AnyContext"/> is false and everything is ungrouped, so
-    /// an exporter can skip drawing boundaries entirely.
+    /// Buckets nodes into boundary groups: a dataflow <see cref="Plane.Pipeline"/> when the node declares a
+    /// pipeline, otherwise a bounded <see cref="Plane.Context"/> when it declares one. A node's pipeline
+    /// wins over its context, so a streaming concept lands in its pipeline lane rather than a domain box.
+    /// Order within a bucket is preserved and buckets are ordered by first appearance, with pipelines drawn
+    /// after contexts so the two planes read as separate bands. Nodes in neither are returned ungrouped.
+    /// When nothing declares a context or a pipeline, <see cref="Grouping.AnyGroup"/> is false and an
+    /// exporter can skip drawing boundaries entirely.
     /// </summary>
     public static Grouping GroupByContext(IReadOnlyList<DomainNode> nodes)
     {
-        if (!nodes.Any(n => n.Context is not null))
+        if (!nodes.Any(n => n.Context is not null || n.Pipeline is not null))
             return new Grouping([], nodes, false);
 
-        var order = new List<string>();
-        var buckets = new Dictionary<string, List<DomainNode>>(StringComparer.Ordinal);
+        var order = new List<(string Label, Plane Plane)>();
+        var buckets = new Dictionary<(string, Plane), List<DomainNode>>();
         var ungrouped = new List<DomainNode>();
 
         foreach (var node in nodes)
         {
-            if (node.Context is null)
+            // A declared pipeline places the node on the streaming plane; otherwise its context, if any,
+            // places it on the domain plane. A node with neither is ungrouped.
+            var key = node.Pipeline is not null
+                ? (node.Pipeline, Plane.Pipeline)
+                : node.Context is not null
+                    ? (node.Context, Plane.Context)
+                    : ((string, Plane)?)null;
+
+            if (key is null)
             {
                 ungrouped.Add(node);
                 continue;
             }
 
-            if (!buckets.TryGetValue(node.Context, out var bucket))
+            if (!buckets.TryGetValue(key.Value, out var bucket))
             {
                 bucket = [];
-                buckets[node.Context] = bucket;
-                order.Add(node.Context);
+                buckets[key.Value] = bucket;
+                order.Add(key.Value);
             }
 
             bucket.Add(node);
         }
 
+        // Contexts first, then pipelines, each kept in first-appearance order, so the domain plane and the
+        // dataflow plane render as two distinct bands rather than interleaved.
         var groups = order
-            .Select(c => (c, (IReadOnlyList<DomainNode>)buckets[c]))
+            .OrderBy(k => k.Plane)
+            .Select(k => new Group(k.Label, k.Plane, buckets[k]))
             .ToList();
 
         return new Grouping(groups, ungrouped, true);

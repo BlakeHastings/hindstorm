@@ -38,12 +38,27 @@ public static class MermaidExporter
         if (grouping.AnyContext)
         {
             var contextIndex = 0;
-            foreach (var (context, contextNodes) in grouping.Groups)
+            var pipelineIndex = 0;
+            foreach (var group in grouping.Groups)
             {
-                builder.AppendLine($"    subgraph ctx{contextIndex++}[\"{Escape(context)}\"]");
-                foreach (var node in contextNodes)
-                    builder.AppendLine($"        {NodeLine(ids, node)}");
-                builder.AppendLine("    end");
+                // Contexts keep the ctxN id; pipelines get a distinct pipeN id and a "pipeline:" label so the
+                // dataflow plane is named and styled apart from a bounded context.
+                if (group.Plane == GraphLayout.Plane.Pipeline)
+                {
+                    var id = $"pipe{pipelineIndex++}";
+                    builder.AppendLine($"    subgraph {id}[\"pipeline: {Escape(group.Label)}\"]");
+                    foreach (var node in group.Nodes)
+                        builder.AppendLine($"        {NodeLine(ids, node)}");
+                    builder.AppendLine("    end");
+                    builder.AppendLine($"    style {id} fill:#ECEFF1,stroke:#455A64,stroke-dasharray:6 3;");
+                }
+                else
+                {
+                    builder.AppendLine($"    subgraph ctx{contextIndex++}[\"{Escape(group.Label)}\"]");
+                    foreach (var node in group.Nodes)
+                        builder.AppendLine($"        {NodeLine(ids, node)}");
+                    builder.AppendLine("    end");
+                }
             }
 
             foreach (var node in grouping.Ungrouped)
@@ -63,8 +78,20 @@ public static class MermaidExporter
         if (ordered.Edges.Count > 0)
             builder.AppendLine();
 
+        // The translation seam (a Translates edge) joins the dataflow plane to the domain plane; remember
+        // each one's link index so it can be styled as a highlighted boundary after the edges are emitted.
+        var seamLinks = new List<int>();
+        var linkIndex = 0;
         foreach (var edge in ordered.Edges)
+        {
             builder.AppendLine($"    {ids[edge.FromId]} -->|{EdgeLabel.For(edge)}| {ids[edge.ToId]}");
+            if (edge.Relation == RelationKind.Translates)
+                seamLinks.Add(linkIndex);
+            linkIndex++;
+        }
+
+        foreach (var link in seamLinks)
+            builder.AppendLine($"    linkStyle {link} stroke:#AD1457,stroke-width:3px;");
 
         builder.AppendLine();
         foreach (var line in ClassDefs)
@@ -111,6 +138,8 @@ public static class MermaidExporter
         "classDef ValueObject fill:#ECEFF1,stroke:#607D8B,color:#000;",
         "classDef ExternalSystem fill:#F48FB1,stroke:#AD1457,color:#000;",
         "classDef Actor fill:#BCAAA4,stroke:#4E342E,color:#000;",
+        "classDef Processor fill:#B0BEC5,stroke:#37474F,color:#000;",
+        "classDef DataEvent fill:#CFD8DC,stroke:#546E7A,color:#000;",
         "classDef inferred fill:#FFFFFF,stroke:#9E9E9E,stroke-dasharray:4 3,color:#616161;",
     ];
 }
@@ -127,6 +156,9 @@ internal static class EdgeLabel
         RelationKind.Issues => "issues",
         RelationKind.Enforces => "enforces",
         RelationKind.Updates => "updates",
+        RelationKind.Transforms => "transforms",
+        RelationKind.Feeds => "feeds",
+        RelationKind.Translates => "translates",
         _ => relation.ToString(),
     };
 }
